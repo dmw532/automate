@@ -1,0 +1,2 @@
+2024-05-10 13:51:54,132 - INFO - $operatingsystem found in /Users/dmw532/automate/linter/test_dir/dir_a/dir_a.pp
+2024-05-10 13:51:54,133 - INFO - TEST: $operatingsystem would have been removed from /Users/dmw532/automate/linter/test_dir/dir_a/dir_a.pp

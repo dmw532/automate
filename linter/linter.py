@@ -2,8 +2,10 @@ import os
 import re
 import logging
 import pdb
+from datetime import datetime
 
-logging.basicConfig(filename='puppet_fact_updates.log', level=logging.INFO, 
+filename = f'puppet-fact-updates-{datetime.now()}.log'
+logging.basicConfig(filename=filename, level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 '''
@@ -19,7 +21,7 @@ logging.basicConfig(filename='puppet_fact_updates.log', level=logging.INFO,
 
 class puppet_linter:
     
-    def __init__(self, root_directory):
+    def __init__(self, root_directory, test=True):
         self.root_directory = root_directory
         self.replacements = { # Dictionary containing deprecated facts with their replacement counter-parts
             '$::architecture': "$facts['os']['architecture']",
@@ -91,7 +93,7 @@ class puppet_linter:
             '$::xendomains': "$facts['xen']['domains']",
             '$::zonename': "$facts['solaris_zones']['current']"
         } 
-       
+        self.test = test
         self.traverse_directories()
         
     def replace_deprecated_facts(self, file_path, is_erb=False):
@@ -114,16 +116,20 @@ class puppet_linter:
             for search_string in search_strings:  
                 if search_string in original_content: #  Log if deprecated fact is found in original file
                     logging.info(f'{search_string} found in {file_path}')
-                    if is_erb is False:
-                        content = re.sub(re.escape(search_string), replacement, content) # Replaces deprecated fact string, with replacement string
+                    if not self.test:
+                        if is_erb is False:
+                            content = re.sub(re.escape(search_string), replacement, content) # Replaces deprecated fact string, with replacement string
+                        else:
+                            content = re.sub(re.escape(search_string), replacement.replace('$', '@'), content) # Replaces deprecated fact, with @replacementfact
+                        if search_string in content: # Log if deprecated fact that was found has been removed
+                            logging.error(f'{search_string} has not been removed from {file_path}')       
+                        else:
+                            logging.info(f'{search_string} has been successfully removed from {file_path}')
                     else:
-                        content = re.sub(re.escape(search_string), replacement.replace('$', '@'), content) # Replaces deprecated fact, with @replacementfact
-                    if search_string in content: # Log if deprecated fact that was found has been removed
-                        logging.error(f'{search_string} has not been removed from {file_path}')       
-                    else:
-                        logging.info(f'{search_string} has been successfully removed from {file_path}')
+                        logging.info(f'TEST: {search_string} would have been removed from {file_path}')
                 else:
-                    logging.info(f'{search_string} was not found in {file_path}')
+                # VERBOSE logging.info(f'{search_string} was not found in {file_path}')
+                    pass
 
         # Writes to file if there were any changes        
         if content != original_content:
@@ -142,6 +148,6 @@ class puppet_linter:
 
 
 if __name__ == "__main__":
-    root_directory = '/Users/dmw532/dps-puppet-control-lms/modules'
-    #root_directory = '/Users/dmw532/automate/linter/test_dir'
+    #root_directory = '/Users/dmw532/dps-puppet-control-lms/modules'
+    root_directory = '/Users/dmw532/automate/linter/test_dir'
     pl = puppet_linter(root_directory)

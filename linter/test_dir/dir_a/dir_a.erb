@@ -1,0 +1,22 @@
+uid nslcd
+<% case @facts['os']['name'] when 'CentOS' %>
+gid ldap
+<% when 'RedHat' %>
+gid ldap
+<% when 'OracleLinux' %>
+gid ldap
+<% else %>
+gid nslcd
+<% end %>
+
+# LDAP Servers
+<% @serverlist.each do |server| %>uri ldap://<%= server%>/
+<% end %>
+
+# The search base that will be used for all queries.
+base <%= @ditbase%>
+
+# SSL options
+ssl start_tls
+tls_cacertfile <%= @cacertlist%>
+tls_reqcert demand
