@@ -15,10 +15,7 @@ class MultiClipBoard:
         self.mcbShelf = shelve.open('mcb')
         self.arg_parser()
         self.arg_handler()
-        # TODO: Save Clipboard content
-        # TODO: List keywords
         self.mcbShelf.close()
-
 
     def save_keyword(self):
         self.mcbShelf[self.args.save] = pyperclip.paste()

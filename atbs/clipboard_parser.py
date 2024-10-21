@@ -23,7 +23,16 @@ class ClipboardParser:
 
     URLS = re.compile(r'''(
     http
-    )''')
+    )''', re.VERBOSE)
+
+    username = re.compile(r'''(
+    [a-zA-Z0-9]+
+    )''', re.VERBOSE)
+
+    workorder = re.compile(r'''(
+    (?<=\s)
+    \d+
+    )''', re.VERBOSE)
 
     def __init__(self):
         """ Grab information from Clipboard and do something with it"""
@@ -57,6 +66,9 @@ class ClipboardParser:
     def set_parse_terms(self):
         if self.args.contacts:
             self.contact_details()
+
+        elif self.args.workorders:
+            self.override_workorders()
         else:
             print("Please select a search term, see --help for more info")
 
@@ -67,8 +79,36 @@ class ClipboardParser:
     def find_links(self):
         self.parse_A = self.URLS
 
-    def workorder(self):
-        pass
+    def override_workorders(self):
+        """ Process clipboard line by line to extract username and workorder and format as username|workorder|FALSE """
+        self.text = str(pyperclip.paste())
+
+        # Split the clipboard text into lines
+        lines = self.text.splitlines()
+
+        results = []
+
+        for line in lines:
+            # Try to extract a username and a workorder from the line
+            username_match = self.username.search(line)
+            workorder_match = self.workorder.search(line)
+
+            if username_match and workorder_match:
+                # If both a username and a workorder are found, format them
+                username = username_match.group(0)
+                workorder = workorder_match.group(0)
+                results.append(f"{username}|{workorder}|FALSE")
+            else:
+                # Handle missing data (either username or workorder is missing)
+                print(f"Skipping line due to missing data: '{line}'")
+
+        if results:
+            formatted_result = '\n'.join(results)
+            pyperclip.copy(formatted_result)
+            print("Formatted work orders copied to Clipboard!")
+            print(formatted_result)
+        else:
+            print("No valid username and workorder pairs found..")
 
     def arg_parser(self):
         self.parser = argparse.ArgumentParser()
