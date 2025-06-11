@@ -1,22 +1,33 @@
-# Script to rename files in case folders based on creation date
+#
+# For reference in the script I am calling:
+#     data the top level folder
+#     case the child folders
+#     files, the children of the case folders
+#
+# Lines to edit:
+#   10 - Path to 'data' folder
+#
+#
+# Questions:
+#   - What if a file already has a <index-like> start? (line 31)
+
 $dataFolder = "C:\path\to\data" # Modify this path to your data folder location
 
-# Function to process a case folder
 function Process-CaseFolder {
     param (
-        [string]$folderPath
+        [string]$casePath
     )
 
-    Write-Host "Processing folder: $folderPath"
+    Write-Host "Processing folder: $casePath"
 
     # Get all files in the folder
-    $allFiles = Get-ChildItem -Path $folderPath -File
+    $allChildFiles = Get-ChildItem -Path $casePath -File
 
     # Separate already prefixed files from unprefixed files
     $prefixedFiles = @()
     $unprefixedFiles = @()
 
-    foreach ($file in $allFiles) {
+    foreach ($file in $allChildFiles) {
         if ($file.Name -match '^\d+\-') {
             $prefixedFiles += $file
         } else {
@@ -45,7 +56,7 @@ function Process-CaseFolder {
     # Rename files with appropriate prefix
     foreach ($file in $sortedFiles) {
         $newName = "$nextPrefix-$($file.Name)"
-        $newPath = Join-Path -Path $folderPath -ChildPath $newName
+        $newPath = Join-Path -Path $casePath -ChildPath $newName
 
         Write-Host "Renaming $($file.FullName) to $newPath"
 
@@ -58,6 +69,8 @@ function Process-CaseFolder {
     }
 }
 
+# End of Process-CaseFolder function
+
 # Get all case folders
 $caseFolders = Get-ChildItem -Path $dataFolder -Directory
 
@@ -66,4 +79,4 @@ foreach ($folder in $caseFolders) {
     Process-CaseFolder -folderPath $folder.FullName
 }
 
-Write-Host "File renaming completed."
+Write-Host "File indexing completed."
